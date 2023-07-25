@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.navbar {
+    background-color: rgb(20, 20, 24);
+}
+
+.navbar-item {
+    background-color: rgb(30, 30, 34);
+}
+
+.surface {
+    background-color: rgb(30, 30, 34);
+}
+
+.surface-dark {
+    background-color: rgb(20, 20, 24);
+}
+
+.surface-light {
+    background-color: rgb(40, 40, 44);
+}
+
+body, html {
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+}
+
+.opacity-max {
+    opacity: 0.95;
+}
