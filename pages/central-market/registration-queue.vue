@@ -207,13 +207,12 @@ export default {
                     class="flex flex-row flex-grow flex-1 justify-end self-center"
                   >
                     <!-- Adjust the size of the div containing the countdown here -->
-                    <p class="w-8">
+                    <p class="w-24 text-center">
                       {{ item.remainingSeconds }}
                     </p>
                     <font-awesome-icon
                       icon="fa-solid fa-clock"
                       size="lg"
-                      class="mx-4"
                     />
                   </div>
                   <div v-else class="flex flex-row flex-grow flex-1 justify-end self-center">
