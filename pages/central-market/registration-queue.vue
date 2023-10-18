@@ -1,5 +1,5 @@
 <script>
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 export default {
   data() {
@@ -7,7 +7,12 @@ export default {
       connection: null,
       registrationQueue: [],
       centralMarketData: [],
-      region: Cookies.get('region') || 'NA',
+      region: Cookies.get("region") || "NA",
+      notificationItemFilters: JSON.parse(
+        Cookies.get("notificationItemFilters") || "[]"
+      ),
+      selectedNotificationItemIndex: null,
+      filterItem: "",
     };
   },
   mounted() {
@@ -41,7 +46,6 @@ export default {
         this.connection.onmessage = (event) => {
           const data = JSON.parse(event.data);
           this.registrationQueue = data;
-          console.log(this.registrationQueue);
           this.updateCountdown();
         };
 
@@ -154,8 +158,48 @@ export default {
     },
     handleRegionChange() {
       this.region = this.region;
-      Cookies.set('region', this.region);
+      Cookies.set("region", this.region);
       this.fetchItems();
+    },
+    isNotificationItem(item) {
+      for (const filter of this.notificationItemFilters) {
+        if (
+          this.getItemFullName(item).toLowerCase().includes(filter.name.toLowerCase()) ||
+          item.item_id === filter.id
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+    getItemFullName(item) {
+      return (
+        this.getEnhancementLevelString(item.enhancement_level) +
+        this.getName(item.item_id)
+      );
+    },
+    addNotificationItemFilter(name) {
+      this.notificationItemFilters.push({
+        name: document.getElementById("enhancement-level").value + name,
+      });
+      Cookies.set(
+        "notificationItemFilters",
+        JSON.stringify(this.notificationItemFilters)
+      );
+
+      this.selectedNotificationItemIndex = null;
+    },
+    removeSelectedItemFilter() {
+      this.notificationItemFilters.splice(
+        this.selectedNotificationItemIndex,
+        1
+      );
+      Cookies.set(
+        "notificationItemFilters",
+        JSON.stringify(this.notificationItemFilters)
+      );
+      this.selectedNotificationItemIndex = null;
     },
   },
 };
@@ -167,28 +211,106 @@ export default {
       <p class="text-center surface rounded-2xl p-8">
         Check out the Registration Queue for the Central Market!
       </p>
-      <div class="surface mt-8 rounded-2xl flex flex-row p-4 py-8 items-center">
-        <p class="">Region:</p>
-        <select
-          v-model="region"
-          @change="handleRegionChange"
-          class="mx-2 surface-light rounded-2xl p-2"
-        >
-          <option value="NA">NA</option>
-          <option value="EU">EU</option>
-          <option value="MENA">MENA</option>
-          <option value="RU">RU</option>
-          <option value="SEA">SEA</option>
-          <option value="TH">TH</option>
-          <option value="JP">JP</option>
-          <option value="SA">SA</option>
-          <option value="KR">KR</option>
-          <option value="TW">TW</option>
-          <option value="GT">GT</option>
-          <option value="CEU">CEU</option>
-          <option value="CNA">CNA</option>
-          <option value="CAS">CAS</option>
-        </select>
+      <div class="surface mt-8 rounded-2xl flex flex-col p-4 py-8 items-center">
+        <div class="flex flex-wrap items-center self-start">
+          <p class="">Region:</p>
+          <select
+            v-model="region"
+            @change="handleRegionChange"
+            class="mx-2 surface-light rounded-2xl p-2"
+          >
+            <option value="NA">NA</option>
+            <option value="EU">EU</option>
+            <option value="MENA">MENA</option>
+            <option value="RU">RU</option>
+            <option value="SEA">SEA</option>
+            <option value="TH">TH</option>
+            <option value="JP">JP</option>
+            <option value="SA">SA</option>
+            <option value="KR">KR</option>
+            <option value="TW">TW</option>
+            <option value="GT">GT</option>
+            <option value="CEU">CEU</option>
+            <option value="CNA">CNA</option>
+            <option value="CAS">CAS</option>
+          </select>
+          <p class="mx-2">Notification Items:</p>
+          <!-- list of buttons to set selectedNotificationItem -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-if="selectedNotificationItemIndex >= 0"
+              v-for="(filter, index) in notificationItemFilters"
+              :key="index"
+              @click="
+                selectedNotificationItemIndex === index
+                  ? (selectedNotificationItemIndex = null)
+                  : (selectedNotificationItemIndex = index)
+              "
+              :class="`surface-light p-2 rounded-2xl flex flex-row hover:ring-1 ring-white items-center' ${
+                selectedNotificationItemIndex === index ? 'ring-2' : ''
+              }`"
+            >
+              <p class="m-2 text-center w-full">
+                {{ filter.name }}
+              </p>
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-row self-start mt-8 gap-4">
+          <!-- dropdown to add enhancement level to filter (PRI, DUO, TRI, TET, PEN) -->
+          <div>
+            <label
+              for="countries"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Enhancement level</label
+            >
+            <select
+              id="enhancement-level"
+              name="enhancement-level"
+              class="surface-light rounded-2xl p-2 w-full"
+            >
+              <option selected value="">Any</option>
+              <option value="PRI: ">PRI</option>
+              <option value="DUO: ">DUO</option>
+              <option value="TRI: ">TRI</option>
+              <option value="TET: ">TET</option>
+              <option value="PEN: ">PEN</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="name"
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              >Item name</label
+            >
+            <input
+              v-model="filterItem"
+              class="surface-light rounded-2xl p-2"
+              id="name"
+              placeholder="Item name"
+            />
+          </div>
+
+          <!-- add filter button -->
+          <button
+            class="bg-green-500 p-4 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
+            @click="addNotificationItemFilter(filterItem)"
+          >
+            <font-awesome-icon icon="fa-solid fa-add" size="lg" />
+            <p class="mx-4 text-center w-full">Add Filter</p>
+          </button>
+          
+            <!-- remove filter button -->
+            <button
+            v-if="selectedNotificationItemIndex != null"
+            class="bg-red-500 p-4 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
+            @click="removeSelectedItemFilter()"
+          >
+            <font-awesome-icon icon="fa-solid fa-trash" size="lg" />
+            <p class="mx-4 text-center w-full">Remove Selected</p>
+          </button>
+        </div>
       </div>
       <div class="surface py-2 mt-8 rounded-2xl flex flex-row">
         <!-- <div>
@@ -212,7 +334,9 @@ export default {
             <!-- registered items -->
             <div v-for="item in registrationQueue">
               <div
-                class="px-4 py-2 surface-light rounded-2xl mx-2 flex flex-row items-center mb-4"
+                :class="`px-4 py-2 surface-light rounded-2xl mx-2 flex flex-row items-center mb-4 ${
+                  isNotificationItem(item) ? 'border-2 border-yellow-500' : ''
+                }`"
               >
                 <!-- image  -->
                 <img
@@ -227,10 +351,7 @@ export default {
                 <div class="flex flex-row flex-grow">
                   <div class="flex flex-col mx-4 self-center">
                     <p class="font-bold">
-                      {{
-                        getEnhancementLevelString(item.enhancement_level) +
-                        getName(item.item_id)
-                      }}
+                      {{ getItemFullName(item) }}
                     </p>
                     <p class="text-gray-300">
                       {{ parseInt(item.price).toLocaleString() }}

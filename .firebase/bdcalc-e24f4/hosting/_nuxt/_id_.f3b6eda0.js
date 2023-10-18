@@ -1,0 +1,1 @@
+import{c as o,t as s,m as a,o as n}from"./entry.a64eeef4.js";const l={__name:"[id]",setup(r){const e=a();return console.log(e),(t,c)=>(n(),o("div",null," event id: "+s(t.$route.params.id),1))}};export{l as default};
