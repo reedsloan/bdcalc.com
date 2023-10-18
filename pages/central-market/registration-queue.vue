@@ -164,7 +164,9 @@ export default {
     isNotificationItem(item) {
       for (const filter of this.notificationItemFilters) {
         if (
-          this.getItemFullName(item).toLowerCase().includes(filter.name.toLowerCase()) ||
+          this.getItemFullName(item)
+            .toLowerCase()
+            .includes(filter.name.toLowerCase()) ||
           item.item_id === filter.id
         ) {
           return true;
@@ -208,16 +210,18 @@ export default {
 <template>
   <ClientOnly>
     <div class="container mx-auto m-1 rounded-xl w-full h-full">
-      <p class="text-center surface rounded-2xl p-8">
-        Check out the Registration Queue for the Central Market!
-      </p>
-      <div class="surface mt-8 rounded-2xl flex flex-col p-4 py-8 items-center">
-        <div class="flex flex-wrap items-center self-start">
-          <p class="">Region:</p>
+      <div class="surface rounded-2xl p-8 flex flex-row items-center">
+        <div>
+          <label
+            for="region"
+            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >Region</label
+          >
           <select
             v-model="region"
             @change="handleRegionChange"
-            class="mx-2 surface-light rounded-2xl p-2"
+            id="region"
+            class="surface-light rounded-2xl p-2"
           >
             <option value="NA">NA</option>
             <option value="EU">EU</option>
@@ -234,30 +238,56 @@ export default {
             <option value="CNA">CNA</option>
             <option value="CAS">CAS</option>
           </select>
-          <p class="mx-2">Notification Items:</p>
-          <!-- list of buttons to set selectedNotificationItem -->
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-if="selectedNotificationItemIndex >= 0"
-              v-for="(filter, index) in notificationItemFilters"
-              :key="index"
-              @click="
-                selectedNotificationItemIndex === index
-                  ? (selectedNotificationItemIndex = null)
-                  : (selectedNotificationItemIndex = index)
-              "
-              :class="`surface-light p-2 rounded-2xl flex flex-row hover:ring-1 ring-white items-center' ${
-                selectedNotificationItemIndex === index ? 'ring-2' : ''
-              }`"
+        </div>
+        <p class="text-center w-full">
+          Check out the Registration Queue for the Central Market!
+        </p>
+      </div>
+      <div
+        class="surface mt-8 rounded-2xl grid grid-cols-12 p-8 py-8 items-center"
+      >
+        <div class="col-span-6 flex flex-col gap-4">
+          <div class="">
+            <p
+              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
             >
-              <p class="m-2 text-center w-full">
-                {{ filter.name }}
-              </p>
+              Notification Items:
+            </p>
+            <!-- list of buttons to set selectedNotificationItem -->
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-if="selectedNotificationItemIndex >= 0"
+                v-for="(filter, index) in notificationItemFilters"
+                :key="index"
+                @click="
+                  selectedNotificationItemIndex === index
+                    ? (selectedNotificationItemIndex = null)
+                    : (selectedNotificationItemIndex = index)
+                "
+                :class="`surface-light p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center' ${
+                  selectedNotificationItemIndex === index ? 'ring-2' : ''
+                }`"
+              >
+                <p class="text-center w-full">
+                  {{ filter.name }}
+                </p>
+              </button>
+            </div>
+          </div>
+          <div>
+            <!-- remove filter button -->
+            <button
+              v-if="selectedNotificationItemIndex != null"
+              class="bg-red-500 p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
+              @click="removeSelectedItemFilter()"
+            >
+              <font-awesome-icon icon="fa-solid fa-trash" size="lg" />
+              <p class="mx-4 text-center w-full">Delete Filter</p>
             </button>
           </div>
         </div>
-        <div class="flex flex-row self-start mt-8 gap-4">
-          <!-- dropdown to add enhancement level to filter (PRI, DUO, TRI, TET, PEN) -->
+        <!-- dropdown to add enhancement level to filter (PRI, DUO, TRI, TET, PEN) -->
+        <div class="col-span-6 flex flex-row items-end gap-4">
           <div>
             <label
               for="countries"
@@ -267,7 +297,7 @@ export default {
             <select
               id="enhancement-level"
               name="enhancement-level"
-              class="surface-light rounded-2xl p-2 w-full"
+              class="surface-light rounded-2xl p-3 w-full"
             >
               <option selected value="">Any</option>
               <option value="PRI: ">PRI</option>
@@ -286,30 +316,21 @@ export default {
             >
             <input
               v-model="filterItem"
-              class="surface-light rounded-2xl p-2"
+              class="surface-light rounded-2xl p-3"
               id="name"
               placeholder="Item name"
             />
           </div>
-
-          <!-- add filter button -->
-          <button
-            class="bg-green-500 p-4 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
-            @click="addNotificationItemFilter(filterItem)"
-          >
-            <font-awesome-icon icon="fa-solid fa-add" size="lg" />
-            <p class="mx-4 text-center w-full">Add Filter</p>
-          </button>
-          
-            <!-- remove filter button -->
+          <div class="flex flex-col gap-2">
+            <!-- add filter button -->
             <button
-            v-if="selectedNotificationItemIndex != null"
-            class="bg-red-500 p-4 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
-            @click="removeSelectedItemFilter()"
-          >
-            <font-awesome-icon icon="fa-solid fa-trash" size="lg" />
-            <p class="mx-4 text-center w-full">Remove Selected</p>
-          </button>
+              class="bg-green-500 p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center h-full"
+              @click="addNotificationItemFilter(filterItem)"
+            >
+              <font-awesome-icon icon="fa-solid fa-add" size="lg" />
+              <p class="mx-4 text-center w-full">Add Filter</p>
+            </button>
+          </div>
         </div>
       </div>
       <div class="surface py-2 mt-8 rounded-2xl flex flex-row">
