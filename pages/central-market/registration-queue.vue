@@ -163,13 +163,20 @@ export default {
     },
     isNotificationItem(item) {
       for (const filter of this.notificationItemFilters) {
+        console.log(filter);
+        console.log(item);
         if (
-          this.getItemFullName(item)
+          this.getName(item.item_id)
             .toLowerCase()
-            .includes(filter.name.toLowerCase()) ||
-          item.item_id === filter.id
+            .includes(filter.name.toLowerCase())
         ) {
-          return true;
+          if (
+            this.getEnhancementLevelString(item.enhancement_level) ===
+              filter.enhancement_level ||
+            filter.enhancement_level === ""
+          ) {
+            return true;
+          }
         }
       }
 
@@ -183,7 +190,8 @@ export default {
     },
     addNotificationItemFilter(name) {
       this.notificationItemFilters.push({
-        name: document.getElementById("enhancement-level").value + name,
+        name: name,
+        enhancement_level: document.getElementById("enhancement-level").value,
       });
       Cookies.set(
         "notificationItemFilters",
@@ -269,7 +277,7 @@ export default {
                 }`"
               >
                 <p class="text-center w-full">
-                  {{ filter.name }}
+                  {{ filter.enhancement_level + filter.name }}
                 </p>
               </button>
             </div>
