@@ -50,7 +50,7 @@ const signOut = async () => {
         <!-- navbar -->
         <div class="flex flex-col items-center w-full">
           <div class="align-middle flex flex-row place-self-center">
-            <NuxtLink to="/">
+            <!-- <NuxtLink to="/">
               <span
                 class="mr-4 p-4 rounded-xl navbar-item hover:ring-1 ring-white"
                 >Enhancement Tools</span
@@ -60,6 +60,12 @@ const signOut = async () => {
               <span
                 class="mr-4 p-4 rounded-xl navbar-item hover:ring-1 ring-white"
                 >Central Market Tools</span
+              >
+            </NuxtLink> -->
+            <NuxtLink to="/central-market/registration-queue">
+              <span
+                class="mr-4 p-4 rounded-xl navbar-item hover:ring-1 ring-white"
+                >Registration Queue</span
               >
             </NuxtLink>
           </div>
