@@ -11,7 +11,7 @@
           link="/central-market/registration-queue"
           icon="fa-solid fa-clock"
         />
-        <Card
+        <!-- <Card
           title="Item Filter Search"
           description="Search for a specific item"
           link="/central-market/filtered-search"
@@ -21,7 +21,7 @@
           title="Accessory Cost Calculator"
           description="Calculate enhancement cost averages"
           link="/central-market/filtered-search"
-          icon="fa-solid fa-ring"
+          icon="fa-solid fa-ring" -->
         />
       </div>
   </div>
