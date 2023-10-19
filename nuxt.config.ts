@@ -10,10 +10,8 @@ export default defineNuxtConfig({
     "~/assets/css/main.scss",
     "@fortawesome/fontawesome-svg-core/styles.css"
   ],
-  postcss: {
-    plugins: {
-      tailwindcss: {},
-      autoprefixer: {}
-    }
-  }
+  modules: [
+    "@nuxtjs/tailwindcss",
+    '@nuxtjs/supabase'
+  ]
 })
