@@ -8,11 +8,11 @@ export default {
       registrationQueue: [],
       centralMarketData: [],
       region: Cookies.get("region") || "NA",
-      notificationItemFilters: JSON.parse(
-        Cookies.get("notificationItemFilters") || "[]"
-      ),
       selectedNotificationItemIndex: null,
+      notificationItemFilters: [],
       filterItem: "",
+      supabase: useSupabaseClient(),
+      user: useSupabaseUser(),
     };
   },
   mounted() {
@@ -20,16 +20,44 @@ export default {
   },
   created() {
     this.fetchItems();
+    this.getNotificationItems();
   },
   beforeDestroy() {
     clearInterval(this.countdownInterval);
   },
   methods: {
+    getNotificationItems() {
+      this.supabase
+        .from("user_data")
+        .select("*")
+        .eq("user_id", this.user.id)
+        .single()
+        .then((data) => {
+          // on error, create the user_data table
+          if (data.error?.code == "PGRST116") {
+            console.log("Creating user_data table")
+            this.supabase
+              .from("user_data")
+              .insert([
+                {
+                  user_id: this.user.id,
+                  registration_queue_filter: []
+                }
+              ])
+              .then((data) => {
+                this.notificationItemFilters = []
+              })
+            return
+          } else {
+            this.notificationItemFilters = data.data.registration_queue_filter
+          }
+        })
+    },
     fetchItems() {
       fetch(
         "https://apiv2.bdolytics.com/en/" +
-          this.region +
-          "/market/central-market-data"
+        this.region +
+        "/market/central-market-data"
       ).then((response) => {
         response.json().then((json) => {
           this.centralMarketData = json.data;
@@ -163,8 +191,6 @@ export default {
     },
     isNotificationItem(item) {
       for (const filter of this.notificationItemFilters) {
-        console.log(filter);
-        console.log(item);
         if (
           this.getName(item.item_id)
             .toLowerCase()
@@ -172,7 +198,7 @@ export default {
         ) {
           if (
             this.getEnhancementLevelString(item.enhancement_level) ===
-              filter.enhancement_level ||
+            filter.enhancement_level ||
             filter.enhancement_level === ""
           ) {
             return true;
@@ -193,10 +219,7 @@ export default {
         name: name,
         enhancement_level: document.getElementById("enhancement-level").value,
       });
-      Cookies.set(
-        "notificationItemFilters",
-        JSON.stringify(this.notificationItemFilters)
-      );
+      this.updateRegistrationQueueFilter(this.notificationItemFilters)
 
       this.selectedNotificationItemIndex = null;
     },
@@ -205,11 +228,20 @@ export default {
         this.selectedNotificationItemIndex,
         1
       );
-      Cookies.set(
-        "notificationItemFilters",
-        JSON.stringify(this.notificationItemFilters)
-      );
+      this.updateRegistrationQueueFilter(this.notificationItemFilters)
       this.selectedNotificationItemIndex = null;
+    },
+    // update the registration_queue_filter column in the user_data table in supabase where the user_id is the current user
+    updateRegistrationQueueFilter(filters) {
+
+      this.supabase
+        .from("user_data")
+        .update({ registration_queue_filter: filters })
+        .eq("user_id", this.user.id)
+        .then((data) => {
+          console.log(data)
+          console.log(this.user.id)
+        })
     },
   },
 };
@@ -220,17 +252,8 @@ export default {
     <div class="container mx-auto m-1 rounded-xl w-full h-full">
       <div class="surface rounded-2xl p-8 flex flex-row items-center">
         <div>
-          <label
-            for="region"
-            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >Region</label
-          >
-          <select
-            v-model="region"
-            @change="handleRegionChange"
-            id="region"
-            class="surface-light rounded-2xl p-2"
-          >
+          <label for="region" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Region</label>
+          <select v-model="region" @change="handleRegionChange" id="region" class="surface-light rounded-2xl p-2">
             <option value="NA">NA</option>
             <option value="EU">EU</option>
             <option value="MENA">MENA</option>
@@ -251,31 +274,21 @@ export default {
           Check out the Registration Queue for the Central Market!
         </p>
       </div>
-      <div
-        class="surface mt-8 rounded-2xl grid grid-cols-12 p-8 py-8 items-center"
-      >
+      <div class="surface mt-8 rounded-2xl grid grid-cols-12 p-8 py-8 items-center">
         <div class="col-span-6 flex flex-col gap-4">
           <div class="">
-            <p
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
+            <p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
               Notification Items:
             </p>
             <!-- list of buttons to set selectedNotificationItem -->
             <div class="flex flex-wrap gap-2">
-              <button
-                v-if="selectedNotificationItemIndex >= 0"
-                v-for="(filter, index) in notificationItemFilters"
-                :key="index"
-                @click="
+              <button v-if="selectedNotificationItemIndex >= 0" v-for="(filter, index) in notificationItemFilters"
+                :key="index" @click="
                   selectedNotificationItemIndex === index
                     ? (selectedNotificationItemIndex = null)
                     : (selectedNotificationItemIndex = index)
-                "
-                :class="`surface-light p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center' ${
-                  selectedNotificationItemIndex === index ? 'ring-2' : ''
-                }`"
-              >
+                  " :class="`surface-light p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center' ${selectedNotificationItemIndex === index ? 'ring-2' : ''
+    }`">
                 <p class="text-center w-full">
                   {{ filter.enhancement_level + filter.name }}
                 </p>
@@ -284,11 +297,9 @@ export default {
           </div>
           <div>
             <!-- remove filter button -->
-            <button
-              v-if="selectedNotificationItemIndex != null"
+            <button v-if="selectedNotificationItemIndex != null"
               class="bg-red-500 p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center"
-              @click="removeSelectedItemFilter()"
-            >
+              @click="removeSelectedItemFilter()">
               <font-awesome-icon icon="fa-solid fa-trash" size="lg" />
               <p class="mx-4 text-center w-full">Delete Filter</p>
             </button>
@@ -297,16 +308,9 @@ export default {
         <!-- dropdown to add enhancement level to filter (PRI, DUO, TRI, TET, PEN) -->
         <div class="col-span-6 flex flex-row items-end gap-4">
           <div>
-            <label
-              for="countries"
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >Enhancement level</label
-            >
-            <select
-              id="enhancement-level"
-              name="enhancement-level"
-              class="surface-light rounded-2xl p-3 w-full"
-            >
+            <label for="countries" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Enhancement
+              level</label>
+            <select id="enhancement-level" name="enhancement-level" class="surface-light rounded-2xl p-3 w-full">
               <option selected value="">Any</option>
               <option value="PRI: ">PRI</option>
               <option value="DUO: ">DUO</option>
@@ -317,24 +321,13 @@ export default {
           </div>
 
           <div>
-            <label
-              for="name"
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-              >Item name</label
-            >
-            <input
-              v-model="filterItem"
-              class="surface-light rounded-2xl p-3"
-              id="name"
-              placeholder="Item name"
-            />
+            <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Item name</label>
+            <input v-model="filterItem" class="surface-light rounded-2xl p-3" id="name" placeholder="Item name" />
           </div>
           <div class="flex flex-col gap-2">
             <!-- add filter button -->
-            <button
-              class="bg-green-500 p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center h-full"
-              @click="addNotificationItemFilter(filterItem)"
-            >
+            <button class="bg-green-500 p-3 rounded-2xl flex flex-row hover:ring-1 ring-white items-center h-full"
+              @click="addNotificationItemFilter(filterItem)">
               <font-awesome-icon icon="fa-solid fa-add" size="lg" />
               <p class="mx-4 text-center w-full">Add Filter</p>
             </button>
@@ -362,20 +355,13 @@ export default {
           <div class="flex flex-col mt-4">
             <!-- registered items -->
             <div v-for="item in registrationQueue">
-              <div
-                :class="`px-4 py-2 surface-light rounded-2xl mx-2 flex flex-row items-center mb-4 ${
-                  isNotificationItem(item) ? 'border-2 border-yellow-500' : ''
-                }`"
-              >
+              <div :class="`px-4 py-2 surface-light rounded-2xl mx-2 flex flex-row items-center mb-4 ${isNotificationItem(item) ? 'border-2 border-yellow-500' : ''
+                }`">
                 <!-- image  -->
-                <img
-                  :src="getIcon(item.item_id)"
-                  :class="
-                    'w-12 h-12 rounded-xl ' +
-                    getBorderForItem(item.item_id) +
-                    ' border-2'
-                  "
-                />
+                <img :src="getIcon(item.item_id)" :class="'w-12 h-12 rounded-xl ' +
+                  getBorderForItem(item.item_id) +
+                  ' border-2'
+                  " />
                 <!-- name -->
                 <div class="flex flex-row flex-grow">
                   <div class="flex flex-col mx-4 self-center">
@@ -386,20 +372,15 @@ export default {
                       {{ parseInt(item.price).toLocaleString() }}
                     </p>
                   </div>
-                  <div
-                    v-if="item.remainingSeconds !== undefined"
-                    class="flex flex-row flex-grow flex-1 justify-end self-center"
-                  >
+                  <div v-if="item.remainingSeconds !== undefined"
+                    class="flex flex-row flex-grow flex-1 justify-end self-center">
                     <!-- Adjust the size of the div containing the countdown here -->
                     <p class="w-24 text-center">
                       {{ item.remainingSeconds }}
                     </p>
                     <font-awesome-icon icon="fa-solid fa-clock" size="lg" />
                   </div>
-                  <div
-                    v-else
-                    class="flex flex-row flex-grow flex-1 justify-end self-center"
-                  >
+                  <div v-else class="flex flex-row flex-grow flex-1 justify-end self-center">
                     <p class="w-8">-</p>
                   </div>
                 </div>

@@ -1,26 +1,4 @@
 <script setup lang="ts">
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCNRigArTmzwSdHGioQwDDml6wMN0TMsks",
-  authDomain: "bdcalc-e24f4.firebaseapp.com",
-  projectId: "bdcalc-e24f4",
-  storageBucket: "bdcalc-e24f4.appspot.com",
-  messagingSenderId: "402917091546",
-  appId: "1:402917091546:web:eb44676f676f2988181de3",
-  measurementId: "G-C7JKELM4C3"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
 const supabase = useSupabaseClient()
 const isSignedIn = ref(false)
 const avatarUrl = ref("")
